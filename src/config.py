@@ -1,38 +1,44 @@
 import os
-from pathlib import Path
+from pydantic import BaseSettings, FilePath
 
-class Config:
-    # Базовые директории
-    BASE_DIR = Path(__file__).parent.parent
+class Settings(BaseSettings):
+    # Основные настройки
+    upload_folder: str = "./uploads"
+    allowed_extensions: list = ["mp4", "avi", "mov"]
+    max_file_size_mb: int = 100
+    model_path: str = "./models/yolov5s.pt"
     
-    # Пути к секретным файлам в Render
-    COOKIES_PATH = Path('/etc/secrets/youtube_cookies.txt')
-    SECRETS_PATH = Path('/etc/secrets/client_secrets.json')
-    
-    # Локальные пути для тестирования (если файлы не найдены в /etc/secrets)
-    LOCAL_COOKIES = BASE_DIR / 'assets' / 'youtube_cookies.txt'
-    LOCAL_SECRETS = BASE_DIR / 'assets' / 'client_secrets.json'
-    
-    @classmethod
-    def get_cookies_path(cls):
-        """Возвращает корректный путь к файлу cookies"""
-        if cls.COOKIES_PATH.exists():
-            return cls.COOKIES_PATH
-        return cls.LOCAL_COOKIES
-    
-    @classmethod
-    def get_secrets_path(cls):
-        """Возвращает корректный путь к client_secrets.json"""
-        if cls.SECRETS_PATH.exists():
-            return cls.SECRETS_PATH
-        return cls.LOCAL_SECRETS
-    
-    # Директории для выходных файлов
-    OUTPUT_DIR = BASE_DIR / 'output'
-    DOWNLOADS_DIR = OUTPUT_DIR / 'downloads'
-    PROCESSED_DIR = OUTPUT_DIR / 'processed'
+    # YouTube API настройки
+    youtube_cookies_path: str = "./youtube_cookies.txt"
+    client_secrets_path: str = "./client_secrets.json"
 
-# Создаем директории при импорте
-Config.OUTPUT_DIR.mkdir(exist_ok=True)
-Config.DOWNLOADS_DIR.mkdir(exist_ok=True)
-Config.PROCESSED_DIR.mkdir(exist_ok=True)
+    class Config:
+        env_file = ".env"
+        env_file_encoding = 'utf-8'
+
+    def validate_paths(self):
+        """Проверяем существование критичных файлов"""
+        required_files = {
+            "YouTube Cookies": self.youtube_cookies_path,
+            "Client Secrets": self.client_secrets_path,
+            "Model": self.model_path
+        }
+        
+        for name, path in required_files.items():
+            if not os.path.exists(path):
+                raise FileNotFoundError(f"{name} файл не найден: {path}")
+
+# Инициализация настроек
+settings = Settings()
+
+# Проверка путей при старте
+try:
+    settings.validate_paths()
+    # Создаем папку для загрузок, если её нет
+    os.makedirs(settings.upload_folder, exist_ok=True)
+except Exception as e:
+    import logging
+    logging.basicConfig(level=logging.ERROR)
+    logger = logging.getLogger(__name__)
+    logger.error(f"Ошибка конфигурации: {str(e)}")
+    raise
