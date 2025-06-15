@@ -1,4 +1,3 @@
-# scripts/subtitle_generator.py
 
 from faster_whisper import WhisperModel
 import os
