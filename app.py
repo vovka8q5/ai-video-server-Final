@@ -30,9 +30,6 @@ def job():
 if __name__ == "__main__":
     scheduler = BlockingScheduler()
     # Запуск в 00:00, 06:00, 12:00, 18:00 (UTC)
-    scheduler.add_job(job, 'cron', hour=00, minute=00) 
-    scheduler.add_job(job, 'cron', hour=06, minute=00)
-    scheduler.add_job(job, 'cron', hour=12, minute=00) 
-    scheduler.add_job(job, 'cron', hour=18, minute=00) 
+    scheduler.add_job(job, 'cron', hour='0,6,12,18', minute=00)  # 00:00, 06:00, 12:00, 18:00 UTC 
     logger.info("Сервис запущен. Ожидание задач...")
     scheduler.start()
