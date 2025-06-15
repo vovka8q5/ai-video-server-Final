@@ -1,0 +1,24 @@
+services:
+  - type: worker
+    name: ai-video-worker
+    env: python
+    region: frankfurt
+    plan: starter
+    pythonVersion: 3.10.13
+    
+    buildCommand: |
+      pip install -r requirements.txt
+      mkdir -p src/assets src/output
+      
+    startCommand: |
+      cd src && python main/schedule_runner.py
+    
+    envVars:
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: YOUTUBE_API_KEY
+        sync: false
+
+secretFiles:
+  - fileName: youtube_cookies.txt
+    mountPath: /etc/secrets/youtube_cookies.txt
