@@ -1,11 +1,8 @@
 from pytube import YouTube
 from googleapiclient.discovery import build
 import os
-import logging
+import json
 
-logger = logging.getLogger(__name__)
-
-# 1. Поиск популярного видео
 def find_trending_video():
     youtube = build("youtube", "v3", developerKey=os.getenv("YOUTUBE_API_KEY"))
     request = youtube.videos().list(
@@ -13,10 +10,8 @@ def find_trending_video():
         chart="mostPopular",
         maxResults=1
     )
-    response = request.execute()
-    return f"https://youtu.be/{response['items'][0]['id']}"
+    return f"https://youtu.be/{request.execute()['items'][0]['id']}"
 
-# 2. Загрузка на канал
 def upload_video(video_path):
     from google.oauth2.credentials import Credentials
     creds = Credentials.from_authorized_user_info(
@@ -28,8 +23,8 @@ def upload_video(video_path):
         part="snippet,status",
         body={
             "snippet": {
-                "title": "Автоматическое видео",
-                "description": "Создано роботом"
+                "title": "Авто-видео",
+                "description": "Создано автоматически"
             },
             "status": {"privacyStatus": "private"}
         },
