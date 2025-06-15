@@ -1,84 +1,59 @@
 import os
 import json
-import time
 import random
 import logging
+import openai  # Добавляем OpenAI
 from pytube import YouTube
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from google.oauth2.credentials import Credentials
 
-# Настройка логов
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Настройка OpenAI
+openai.api_key = os.getenv("OPENAI_API_KEY")  # Исправьте название переменной, если нужно
 
-def load_youtube_cookies():
-    """Загружает cookies из переменных окружения и сохраняет в файл."""
-    cookies = os.getenv("YOUTUBE_COOKIES")
-    if not cookies:
-        raise ValueError("Не найдены YOUTUBE_COOKIES в переменных окружения!")
-    
-    with open("cookies.txt", "w") as f:
-        f.write(cookies)
-    logger.info("Cookies для YouTube загружены")
-
-def find_trending_video(region_code: str = "US") -> str:
-    """Ищет самое популярное видео в указанном регионе."""
+def generate_metadata(video_title: str) -> dict:
+    """Генерирует заголовок, описание и теги через OpenAI."""
     try:
-        youtube = build("youtube", "v3", developerKey=os.getenv("YOUTUBE_API_KEY"))
-        request = youtube.videos().list(
-            part="id",
-            chart="mostPopular",
-            regionCode=region_code,
-            maxResults=1
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "Ты помощник для создания SEO-оптимизированных метаданных YouTube."},
+                {"role": "user", "content": f"Сгенерируй креативные заголовок, описание и 5 тегов для видео на тему: '{video_title}'. Ответ в формате JSON."}
+            ]
         )
-        response = request.execute()
-        video_id = response["items"][0]["id"]
-        url = f"https://youtu.be/{video_id}"
-        logger.info(f"Найдено трендовое видео: {url}")
-        return url
+        return json.loads(response.choices[0].message["content"])
     except Exception as e:
-        logger.error(f"Ошибка поиска видео: {str(e)}")
-        raise
+        logger.error(f"Ошибка OpenAI: {str(e)}")
+        return {
+            "title": video_title + " | Автоматическое видео",
+            "description": "Создано автоматически. Подпишитесь на канал!",
+            "tags": ["авто", "видео", "обработка"]
+        }
 
-def upload_video(video_path: str, title: str = "Автоматическое видео") -> str:
-    """Загружает видео на YouTube с защитой от блокировки."""
+def upload_video(video_path: str, original_title: str) -> str:
+    """Загружает видео с AI-метаданными."""
     try:
-        # 1. Задержка перед загрузкой (5-15 минут)
-        delay = random.randint(300, 900)
-        logger.info(f"Ожидание {delay} сек для избежания блокировки...")
-        time.sleep(delay)
-
-        # 2. Настройка cookies и OAuth
-        load_youtube_cookies()
+        # Генерация метаданных
+        metadata = generate_metadata(original_title)
+        
+        # Загрузка на YouTube
         creds = Credentials.from_authorized_user_info(
             info=json.loads(os.getenv("CLIENT_SECRETS_JSON"))
-        )
-
-        # 3. Загрузка через API
         youtube = build("youtube", "v3", credentials=creds)
+        
         request = youtube.videos().insert(
             part="snippet,status",
             body={
                 "snippet": {
-                    "title": title,
-                    "description": "Создано автоматически",
-                    "tags": ["авто", "обработка"]
+                    "title": metadata["title"],
+                    "description": metadata["description"],
+                    "tags": metadata["tags"]
                 },
                 "status": {"privacyStatus": "private"}
             },
             media_body=video_path
         )
-        response = request.execute()
-        video_id = response["id"]
-        logger.info(f"Видео {video_id} успешно загружено!")
-        return video_id
-
+        return request.execute()["id"]
     except HttpError as e:
-        if e.resp.status == 403:
-            logger.error("Достигнут лимит загрузок! Сплю 1 час...")
-            time.sleep(3600)
-        raise
-    except Exception as e:
-        logger.error(f"Критическая ошибка: {str(e)}")
+        logger.error(f"Ошибка YouTube API: {str(e)}")
         raise
