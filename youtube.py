@@ -1,53 +1,56 @@
 import os
 import json
-import random
 import logging
-import openai  # Добавляем OpenAI
 from pytube import YouTube
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
-from google.oauth2.credentials import Credentials
 
-# Настройка OpenAI
-openai.api_key = os.getenv("OPENAI_API_KEY")  # Исправьте название переменной, если нужно
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-def generate_metadata(video_title: str) -> dict:
-    """Генерирует заголовок, описание и теги через OpenAI."""
+def find_english_trending_video():
+    """Ищет англоязычное трендовое видео"""
     try:
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "Ты помощник для создания SEO-оптимизированных метаданных YouTube."},
-                {"role": "user", "content": f"Сгенерируй креативные заголовок, описание и 5 тегов для видео на тему: '{video_title}'. Ответ в формате JSON."}
-            ]
-        )
-        return json.loads(response.choices[0].message["content"])
-    except Exception as e:
-        logger.error(f"Ошибка OpenAI: {str(e)}")
-        return {
-            "title": video_title + " | Автоматическое видео",
-            "description": "Создано автоматически. Подпишитесь на канал!",
-            "tags": ["авто", "видео", "обработка"]
-        }
-
-def upload_video(video_path: str, original_title: str) -> str:
-    """Загружает видео с AI-метаданными."""
-    try:
-        # Генерация метаданных
-        metadata = generate_metadata(original_title)
+        youtube = build("youtube", "v3", developerKey=os.getenv("YOUTUBE_API_KEY"))
         
-        # Загрузка на YouTube
-        creds = Credentials.from_authorized_user_info(
-            info=json.loads(os.getenv("CLIENT_SECRETS_JSON"))
-        youtube = build("youtube", "v3", credentials=creds)
+        # Ищем в международных трендах (регион US + английский язык)
+        request = youtube.videos().list(
+            part="snippet",
+            chart="mostPopular",
+            regionCode="US",
+            maxResults=50,  # Больше выбор для фильтрации
+            relevanceLanguage="en"  # Только английский
+        )
+        videos = request.execute()["items"]
+        
+        # Фильтруем по названию (исключаем неанглийские)
+        for video in videos:
+            title = video["snippet"]["title"]
+            if all(ord(char) < 128 for char in title):  # Проверка на английские символы
+                return f"https://youtu.be/{video['id']}"
+        
+        raise ValueError("Не найдено англоязычных видео в трендах")
+        
+    except Exception as e:
+        logger.error(f"Ошибка поиска: {str(e)}")
+        raise
+
+def upload_video(video_path: str, title: str, description: str, tags: list):
+    """Загружает видео с английскими метаданными"""
+    try:
+        youtube = build("youtube", "v3", 
+                      credentials=Credentials.from_authorized_user_info(
+                          json.loads(os.getenv("CLIENT_SECRETS_JSON"))
+                      )
         
         request = youtube.videos().insert(
             part="snippet,status",
             body={
                 "snippet": {
-                    "title": metadata["title"],
-                    "description": metadata["description"],
-                    "tags": metadata["tags"]
+                    "title": title,
+                    "description": description,
+                    "tags": tags,
+                    "defaultLanguage": "en"  # Основной язык
                 },
                 "status": {"privacyStatus": "private"}
             },
@@ -55,5 +58,5 @@ def upload_video(video_path: str, original_title: str) -> str:
         )
         return request.execute()["id"]
     except HttpError as e:
-        logger.error(f"Ошибка YouTube API: {str(e)}")
+        logger.error(f"Ошибка загрузки: {str(e)}")
         raise
