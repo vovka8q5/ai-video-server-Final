@@ -1,36 +1,21 @@
-# Основные зависимости
-python>=3.10,<3.11  # Рекомендуемая версия
-ffmpeg-python==0.2.0  # Обработка видео
-pydantic==2.6.4  # Валидация данных
-python-dotenv==1.0.1  # Загрузка .env файлов
+# РћСЃРЅРѕРІРЅС‹Рµ
+python>=3.10
+ffmpeg-python==0.2.0
+pydantic==2.6.4
 
 # YouTube
-yt-dlp==2024.4.9  # Скачивание видео
-google-api-python-client==2.123.0  # YouTube API
-google-auth-oauthlib==1.2.0  # Аутентификация
-google-auth==2.27.0  # OAuth2 клиент
+yt-dlp==2024.4.9
+google-api-python-client==2.123.0
+google-auth-oauthlib==1.2.0
 
-# Субтитры и аудио
-faster-whisper==0.10.0  # Быстрая генерация субтитров
-openai-whisper==20231117  # Точная генерация
-pydub==0.25.1  # Обработка аудио
+# РЎСѓР±С‚РёС‚СЂС‹
+faster-whisper==0.10.0
+torch==2.2.1
 
 # Telegram
-python-telegram-bot==20.6  # Асинхронный клиент
-requests==2.31.0  # HTTP-запросы
+python-telegram-bot==20.6
+requests==2.31.0
 
-# AI и обработка
-openai==1.12.0  # Для GPT-генерации заголовков
-torch==2.2.1  # Для Whisper (с CUDA если доступно)
-torchaudio==2.2.1  # Обработка аудио
-
-# Дополнительные утилиты
-tqdm==4.66.2  # Прогресс-бары
-loguru==0.7.2  # Удобное логирование
-numpy==1.26.4  # Матричные операции
-pandas==2.2.1  # Обработка данных (опционально)
-
-# Для разработки (необязательно)
-pytest==8.0.2  # Тестирование
-black==24.2.0  # Форматирование кода
-mypy==1.8.0  # Проверка типов
+# РЈС‚РёР»РёС‚С‹
+tqdm==4.66.2
+loguru==0.7.2
