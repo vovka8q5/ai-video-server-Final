@@ -1,6 +1,0 @@
-apscheduler==3.10.0
-pytube==15.0.0
-moviepy==1.0.3
-google-api-python-client==2.86.0
-python-telegram-bot==20.3
-opencv-python==4.7.0.72
