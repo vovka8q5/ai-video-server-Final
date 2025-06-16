@@ -8,7 +8,7 @@ YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
 
 # Путь к файлам
 CLIENT_SECRETS_FILE = "/etc/secrets/client_secrets.json"
-TOKEN_FILE = "token.pickle"
+TOKEN_FILE = "/etc/secrets/token.pickle"  # Обновленный путь
 VIDEOS_DIR = "videos/"
 FACES_DIR = "faces/"
 MUSIC_PATH = "music.mp3"
