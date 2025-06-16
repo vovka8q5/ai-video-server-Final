@@ -20,8 +20,24 @@ from src.utils import (
 )
 from src.config import *
 
+def check_files():
+    required_files = [
+        CLIENT_SECRETS_FILE,
+        TOKEN_FILE,
+        MUSIC_PATH,
+        os.path.join(FACES_DIR, "source_face.jpg"),
+        os.path.join(FACES_DIR, "target_face.jpg"),
+    ]
+    for file in required_files:
+        if not os.path.exists(file):
+            log_error(f"Файл не найден: {file}")
+            raise FileNotFoundError(f"Файл не найден: {file}")
+
 def main():
     try:
+        # Проверка наличия необходимых файлов
+        check_files()
+        
         # Поиск и скачивание видео по ключевому слову с многомиллионными просмотрами
         query = "example video"  # Замените на нужный ключевой запрос
         video_path = VIDEOS_DIR
