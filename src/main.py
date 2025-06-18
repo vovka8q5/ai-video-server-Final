@@ -1,8 +1,8 @@
 import os
 import logging
 from apscheduler.schedulers.blocking import BlockingScheduler
-from src.download_video import download_video_by_query
-from src.process_video import (
+from download_video import download_video_by_query
+from process_video import (
     extract_audio,
     trim_video,
     add_animation,
@@ -11,14 +11,14 @@ from src.process_video import (
     add_subtitles,
     add_music,
 )
-from src.upload_video import upload_to_youtube
-from src.utils import (
+from upload_video import upload_to_youtube
+from utils import (
     send_telegram_message,
     translate_to_english,
     log_info,
     log_error,
 )
-from src.config import *
+from config import *
 
 def check_files():
     required_files = [
