@@ -1,7 +1,46 @@
-﻿services:
+services:
   - type: web
-    name: luckyjet-bot
+    name: ai-video-server
     env: python
-    buildCommand: ""
-    startCommand: python luckyjet_masterbot.py
+    buildCommand: |
+      pip install -r requirements.txt
+    startCommand: |
+      python src/main.py
+    envVars:
+      - key: OPENAI_API_KEY
+        fromSecret: OPENAI_API_KEY
+      - key: TELEGRAM_BOT_TOKEN
+        fromSecret: TELEGRAM_BOT_TOKEN
+      - key: TELEGRAM_CHAT_ID
+        fromSecret: TELEGRAM_CHAT_ID
+      - key: YOUTUBE_API_KEY
+        fromSecret: YOUTUBE_API_KEY
+    secrets:
+      - key: OPENAI_API_KEY
+        value: your_openai_api_key
+      - key: TELEGRAM_BOT_TOKEN
+        value: your_telegram_bot_token
+      - key: TELEGRAM_CHAT_ID
+        value: your_telegram_chat_id
+      - key: YOUTUBE_API_KEY
+        value: your_youtube_api_key
+    disk: true
+    plan: performance  # Обновлено на Performance Tier
+    region: oregon
+    healthCheckPath: /
     autoDeploy: true
+    branches:
+      - main
+    envVarGroups:
+      - default
+    secretsFromEnvVarGroups:
+      - default
+    staticSiteConfig:
+      rootDir: public
+      spa: false
+    diskMounts:
+      - path: /etc/secrets
+        volume: ai-video-server-secrets
+    volumes:
+      - name: ai-video-server-secrets
+        type: secret
